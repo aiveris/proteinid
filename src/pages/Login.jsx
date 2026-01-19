@@ -1,15 +1,21 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Alert, Modal } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, auth } from '../config/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -66,6 +72,37 @@ const Login = () => {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      setResetError('Įveskite el. pašto adresą');
+      return;
+    }
+
+    try {
+      setResetError('');
+      setResetMessage('');
+      setLoading(true);
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetMessage('Slaptažodžio atkūrimo nuoroda išsiųsta į jūsų el. paštą');
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetEmail('');
+        setResetMessage('');
+      }, 3000);
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        setResetError('Vartotojas su tokiu el. paštu nerastas');
+      } else if (error.code === 'auth/invalid-email') {
+        setResetError('Neteisingas el. pašto formatas');
+      } else {
+        setResetError('Nepavyko išsiųsti slaptažodžio atkūrimo nuorodos');
+      }
+      console.error('Password reset error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-vh-100 bg-light">
       <Container className="py-5">
@@ -91,14 +128,34 @@ const Login = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label className="fw-bold">Slaptažodis</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="position-relative">
+                      <Form.Control
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute end-0 top-50 translate-middle-y"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ textDecoration: 'none', color: '#6c757d' }}
+                      >
+                        <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      </button>
+                    </div>
                   </Form.Group>
+
+                  <div className="text-end mb-3">
+                    <Button 
+                      variant="link" 
+                      className="p-0 text-decoration-none"
+                      onClick={() => setShowResetModal(true)}
+                    >
+                      Pamiršote slaptažodį?
+                    </Button>
+                  </div>
 
                   <Button 
                     variant="primary" 
@@ -134,6 +191,38 @@ const Login = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Password Reset Modal */}
+      <Modal show={showResetModal} onHide={() => setShowResetModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Slaptažodžio atkūrimas</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {resetMessage && <Alert variant="success">{resetMessage}</Alert>}
+          {resetError && <Alert variant="danger">{resetError}</Alert>}
+          
+          <Form.Group>
+            <Form.Label className="fw-bold">El. paštas</Form.Label>
+            <Form.Control
+              type="email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              placeholder="vardas@example.com"
+            />
+            <Form.Text className="text-muted">
+              Įveskite savo el. pašto adresą ir mes atsiųsime slaptažodžio atkūrimo nuorodą.
+            </Form.Text>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowResetModal(false)}>
+            Atšaukti
+          </Button>
+          <Button variant="primary" onClick={handlePasswordReset} disabled={loading}>
+            {loading ? 'Siunčiama...' : 'Siųsti nuorodą'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
     </div>
   );

@@ -12,6 +12,8 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -118,26 +120,46 @@ const Register = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label className="fw-bold">Slaptažodis</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      minLength={6}
-                    />
+                    <div className="position-relative">
+                      <Form.Control
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute end-0 top-50 translate-middle-y"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ textDecoration: 'none', color: '#6c757d' }}
+                      >
+                        <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      </button>
+                    </div>
                   </Form.Group>
 
                   <Form.Group className="mb-3">
                     <Form.Label className="fw-bold">Patvirtinti slaptažodį</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      minLength={6}
-                    />
+                    <div className="position-relative">
+                      <Form.Control
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute end-0 top-50 translate-middle-y"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{ textDecoration: 'none', color: '#6c757d' }}
+                      >
+                        <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                      </button>
+                    </div>
                   </Form.Group>
 
                   <Button 
