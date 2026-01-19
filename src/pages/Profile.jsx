@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Profile = () => {
   const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
+  const [name, setName] = useState('');
   const [weight, setWeight] = useState('');
   const [gender, setGender] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,7 @@ const Profile = () => {
       
       if (userSnap.exists()) {
         const data = userSnap.data();
+        setName(data.name || '');
         setWeight(data.weight || '');
         setGender(data.gender || '');
       }
@@ -42,6 +44,7 @@ const Profile = () => {
     try {
       const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, {
+        name,
         weight: parseFloat(weight),
         gender
       });
@@ -67,7 +70,7 @@ const Profile = () => {
 
   const calculateGoal = () => {
     if (weight && gender) {
-      const multiplier = gender === 'male' ? 2.2 : 1.8;
+      const multiplier = gender === 'male' ? 1.8 : 1.6;
       return Math.round(parseFloat(weight) * multiplier);
     }
     return 0;
@@ -156,8 +159,10 @@ const Profile = () => {
                 <Form.Label className="fw-bold">Vardas</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userProfile?.name || ''}
-                  disabled
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Jūsų vardas"
+                  required
                 />
               </Form.Group>
 
@@ -194,7 +199,7 @@ const Profile = () => {
                   Jūsų dienos tikslas: <strong>{calculateGoal()}g</strong> baltymų
                   <br />
                   <small className="text-muted">
-                    (Vyrams: {weight} kg × 2.2 | Moterims: {weight} kg × 1.8)
+                    (Vyrams: {weight} kg × 1.8 | Moterims: {weight} kg × 1.6)
                   </small>
                 </Alert>
               )}

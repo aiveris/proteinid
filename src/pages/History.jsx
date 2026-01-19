@@ -55,7 +55,7 @@ const History = () => {
       if (userSnap.exists()) {
         const data = userSnap.data();
         if (data.weight && data.gender) {
-          const multiplier = data.gender === 'male' ? 2.2 : 1.8;
+          const multiplier = data.gender === 'male' ? 1.8 : 1.6;
           const calculatedGoal = Math.round(data.weight * multiplier);
           setGoal(calculatedGoal);
         }
@@ -226,34 +226,34 @@ const History = () => {
         <Row className="mb-3 g-3">
           <Col xs={4}>
             <Card className="text-center">
-              <Card.Body className="py-2">
-                <div className="text-primary mb-1" style={{ fontSize: '1.75rem' }}>
+              <Card.Body className="py-1">
+                <div className="text-primary mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-calendar-check"></i>
                 </div>
-                <h4 className="mb-1">{stats.totalDays}</h4>
-                <small className="text-muted" style={{ fontSize: '0.85rem' }}>Dienų įrašyta</small>
+                <h5 className="mb-0">{stats.totalDays}</h5>
+                <small className="text-muted" style={{ fontSize: '0.75rem' }}>Įrašų</small>
               </Card.Body>
             </Card>
           </Col>
           <Col xs={4}>
             <Card className="text-center">
-              <Card.Body className="py-2">
-                <div className="text-success mb-1" style={{ fontSize: '1.75rem' }}>
+              <Card.Body className="py-1">
+                <div className="text-success mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-trophy"></i>
                 </div>
-                <h4 className="mb-1">{stats.daysGoalReached}</h4>
-                <small className="text-muted" style={{ fontSize: '0.85rem' }}>Pasiekimai</small>
+                <h5 className="mb-0">{stats.daysGoalReached}</h5>
+                <small className="text-muted" style={{ fontSize: '0.75rem' }}>Pasiekimai</small>
               </Card.Body>
             </Card>
           </Col>
           <Col xs={4}>
             <Card className="text-center">
-              <Card.Body className="py-2">
-                <div className="text-info mb-1" style={{ fontSize: '1.75rem' }}>
+              <Card.Body className="py-1">
+                <div className="text-info mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-bar-chart"></i>
                 </div>
-                <h4 className="mb-1">{stats.averageProtein} g</h4>
-                <small className="text-muted" style={{ fontSize: '0.85rem' }}>Vidutiniškai</small>
+                <h5 className="mb-0">{stats.averageProtein} g</h5>
+                <small className="text-muted" style={{ fontSize: '0.75rem' }}>Vidutiniškai</small>
               </Card.Body>
             </Card>
           </Col>

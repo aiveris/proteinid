@@ -114,7 +114,7 @@ const Dashboard = () => {
         const data = userSnap.data();
         if (data.weight && data.gender) {
           // Simple calculation: weight * multiplier
-          const multiplier = data.gender === 'male' ? 2.2 : 1.8;
+          const multiplier = data.gender === 'male' ? 1.8 : 1.6;
           const calculatedGoal = Math.round(data.weight * multiplier);
           setGoal(calculatedGoal);
         }
@@ -421,7 +421,7 @@ const Dashboard = () => {
       <Container className="py-2">
         {/* Progress Card */}
         <Card className="mb-2">
-          <Card.Body>
+          <Card.Body className="py-2">
             <h6 className="fw-bold mb-2">Dienos progresas</h6>
             <div className="d-flex align-items-center gap-3">
               <div className="flex-grow-1">
@@ -581,11 +581,11 @@ const Dashboard = () => {
                 <Table hover className="table-sm mb-0" style={{ fontSize: '0.875rem', tableLayout: 'fixed', width: '100%' }}>
                   <thead>
                     <tr>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '14%' }}>Laikas</th>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '42%' }}>Produktas</th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '15%' }}>Laikas</th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '41%' }}>Produktas</th>
                       <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '16%' }}>Porcija</th>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '18%' }}>Baltymai</th>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '10%' }}></th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '19%' }}>Baltymai</th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '9%' }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -637,7 +637,7 @@ const Dashboard = () => {
           display: grid;
           grid-template-rows: repeat(2, 1fr);
           grid-auto-flow: column;
-          gap: 0.5rem;
+          gap: 0.38rem;
         }
         
         .quick-select-btn {
