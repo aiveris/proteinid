@@ -35,6 +35,7 @@ const History = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [chartData, setChartData] = useState([]);
+  const [allTimeStats, setAllTimeStats] = useState({ totalDays: 0, daysGoalReached: 0, averageProtein: 0 });
   const [goal, setGoal] = useState(100);
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -46,6 +47,12 @@ const History = () => {
       loadChartData();
     }
   }, [currentUser, selectedYear, selectedMonth]);
+
+  useEffect(() => {
+    if (currentUser && goal) {
+      loadAllTimeStats();
+    }
+  }, [currentUser, goal]);
 
   const loadUserGoal = async () => {
     try {
@@ -62,6 +69,45 @@ const History = () => {
       }
     } catch (error) {
       console.error('Error loading goal:', error);
+    }
+  };
+
+  const loadAllTimeStats = async () => {
+    try {
+      const entriesRef = collection(db, 'daily_logs');
+      const q = query(
+        entriesRef,
+        where('user_id', '==', currentUser.uid)
+      );
+      
+      const snapshot = await getDocs(q);
+      const dailyTotals = {};
+      
+      // Sum protein for each unique date
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.date) {
+          if (!dailyTotals[data.date]) {
+            dailyTotals[data.date] = 0;
+          }
+          dailyTotals[data.date] += parseFloat(data.protein_amount) || 0;
+        }
+      });
+      
+      // Calculate statistics
+      const daysArray = Object.values(dailyTotals).filter(protein => protein > 0);
+      const totalDays = daysArray.length;
+      const daysGoalReached = daysArray.filter(protein => protein >= goal).length;
+      const totalProtein = daysArray.reduce((sum, protein) => sum + protein, 0);
+      const averageProtein = totalDays > 0 ? Math.round(totalProtein / totalDays) : 0;
+      
+      setAllTimeStats({
+        totalDays,
+        daysGoalReached,
+        averageProtein
+      });
+    } catch (error) {
+      console.error('Error loading all-time stats:', error);
     }
   };
 
@@ -152,22 +198,6 @@ const History = () => {
     }
   };
 
-  // Calculate statistics from chart data
-  const calculateStats = () => {
-    const daysWithData = chartData.filter(d => d.protein > 0);
-    const totalDays = daysWithData.length;
-    const daysGoalReached = daysWithData.filter(d => d.protein >= goal).length;
-    const totalProtein = daysWithData.reduce((sum, d) => sum + d.protein, 0);
-    const averageProtein = totalDays > 0 ? Math.round(totalProtein / totalDays) : 0;
-
-    return {
-      totalDays,
-      daysGoalReached,
-      averageProtein
-    };
-  };
-
-  const stats = calculateStats();
 
   return (
     <div className="history-page">
@@ -200,7 +230,7 @@ const History = () => {
             {/* Mobile Navigation Dropdown */}
             <Dropdown className="d-md-none">
               <Dropdown.Toggle variant="light" id="mobile-menu">
-                <i className="bi bi-list"></i>
+                <i className="bi bi-list" style={{ fontSize: '1.5rem' }}></i>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end">
                 <Dropdown.Item className="text-muted small">{userProfile?.name?.split(' ')[0]}</Dropdown.Item>
@@ -230,7 +260,7 @@ const History = () => {
                 <div className="text-primary mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-calendar-check"></i>
                 </div>
-                <h5 className="mb-0">{stats.totalDays}</h5>
+                <h5 className="mb-0">{allTimeStats.totalDays}</h5>
                 <small className="text-muted" style={{ fontSize: '0.75rem' }}>Įrašų</small>
               </Card.Body>
             </Card>
@@ -241,7 +271,7 @@ const History = () => {
                 <div className="text-success mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-trophy"></i>
                 </div>
-                <h5 className="mb-0">{stats.daysGoalReached}</h5>
+                <h5 className="mb-0">{allTimeStats.daysGoalReached}</h5>
                 <small className="text-muted" style={{ fontSize: '0.75rem' }}>Pasiekimai</small>
               </Card.Body>
             </Card>
@@ -252,7 +282,7 @@ const History = () => {
                 <div className="text-info mb-0" style={{ fontSize: '1.5rem' }}>
                   <i className="bi bi-bar-chart"></i>
                 </div>
-                <h5 className="mb-0">{stats.averageProtein} g</h5>
+                <h5 className="mb-0">{allTimeStats.averageProtein} g</h5>
                 <small className="text-muted" style={{ fontSize: '0.75rem' }}>Vidutiniškai</small>
               </Card.Body>
             </Card>
@@ -472,6 +502,17 @@ const History = () => {
           </Modal.Body>
         </Modal>
       </Container>
+
+      <style>{`
+        .navbar .nav-link {
+          color: #000 !important;
+          font-weight: bold;
+        }
+        
+        .navbar .nav-link:hover {
+          color: #333 !important;
+        }
+      `}</style>
     </div>
   );
 };

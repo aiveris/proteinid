@@ -397,7 +397,7 @@ const Dashboard = () => {
             {/* Mobile Navigation Dropdown */}
             <Dropdown className="d-md-none">
               <Dropdown.Toggle variant="light" id="mobile-menu">
-                <i className="bi bi-list"></i>
+                <i className="bi bi-list" style={{ fontSize: '1.5rem' }}></i>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end">
                 <Dropdown.Item className="text-muted small">{userProfile?.name?.split(' ')[0]}</Dropdown.Item>
@@ -633,6 +633,15 @@ const Dashboard = () => {
       </Container>
 
       <style>{`
+        .navbar .nav-link {
+          color: #000 !important;
+          font-weight: bold;
+        }
+        
+        .navbar .nav-link:hover {
+          color: #333 !important;
+        }
+        
         .quick-select-grid {
           display: grid;
           grid-template-rows: repeat(2, 1fr);
@@ -641,7 +650,7 @@ const Dashboard = () => {
         }
         
         .quick-select-btn {
-          aspect-ratio: 1;
+          aspect-ratio: auto;
           min-height: 60px;
           padding: 0.5rem;
           display: flex;

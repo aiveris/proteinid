@@ -107,7 +107,7 @@ const Profile = () => {
             {/* Mobile Navigation Dropdown */}
             <Dropdown className="d-md-none">
               <Dropdown.Toggle variant="light" id="mobile-menu">
-                <i className="bi bi-list"></i>
+                <i className="bi bi-list" style={{ fontSize: '1.5rem' }}></i>
               </Dropdown.Toggle>
               <Dropdown.Menu align="end">
                 <Dropdown.Item className="text-muted small">{userProfile?.name?.split(' ')[0]}</Dropdown.Item>
@@ -128,10 +128,10 @@ const Profile = () => {
         </Container>
       </nav>
 
-      <Container className="py-3">
+      <Container className="py-2">
         <Card>
-          <Card.Body>
-            <h6 className="fw-bold mb-3">
+          <Card.Body className="p-2">
+            <h6 className="fw-bold mb-2">
               <i className="bi bi-person-gear me-2"></i>
               Profilio Nustatymai
             </h6>
@@ -143,20 +143,17 @@ const Profile = () => {
             )}
 
             <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold">El. paštas</Form.Label>
+              <Form.Group className="mb-2">
+                <Form.Label className="fw-bold small">El. paštas</Form.Label>
                 <Form.Control
                   type="email"
                   value={currentUser?.email || ''}
                   disabled
                 />
-                <Form.Text className="text-muted">
-                  El. pašto negalima keisti
-                </Form.Text>
               </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold">Vardas</Form.Label>
+              <Form.Group className="mb-2">
+                <Form.Label className="fw-bold small">Vardas</Form.Label>
                 <Form.Control
                   type="text"
                   value={name}
@@ -166,8 +163,8 @@ const Profile = () => {
                 />
               </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold">Svoris (kg)</Form.Label>
+              <Form.Group className="mb-2">
+                <Form.Label className="fw-bold small">Svoris (kg)</Form.Label>
                 <Form.Control
                   type="number"
                   value={weight}
@@ -180,8 +177,8 @@ const Profile = () => {
                 />
               </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold">Lytis</Form.Label>
+              <Form.Group className="mb-2">
+                <Form.Label className="fw-bold small">Lytis</Form.Label>
                 <Form.Select
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
@@ -216,6 +213,17 @@ const Profile = () => {
           </Card.Body>
         </Card>
       </Container>
+
+      <style>{`
+        .navbar .nav-link {
+          color: #000 !important;
+          font-weight: bold;
+        }
+        
+        .navbar .nav-link:hover {
+          color: #333 !important;
+        }
+      `}</style>
     </div>
   );
 };
