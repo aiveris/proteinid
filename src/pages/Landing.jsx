@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
+import { MeshGradient } from '@paper-design/shaders-react';
 
 const Landing = () => {
   const features = [
@@ -55,9 +56,31 @@ const Landing = () => {
 
   return (
     <div className="landing-page">
-      {/* Hero Section */}
+      {/* Hero Section with Shader Background */}
       <section className="hero-section">
-        <Container>
+        {/* Mesh Gradient Shader Background */}
+        <MeshGradient
+          className="hero-shader-bg"
+          colors={['#667eea', '#764ba2', '#f093fb', '#5e72e4']}
+          speed={0.3}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 0,
+          }}
+        />
+        
+        {/* Animated light overlay effects */}
+        <div className="lighting-overlay">
+          <div className="light-orb light-orb-1"></div>
+          <div className="light-orb light-orb-2"></div>
+          <div className="light-orb light-orb-3"></div>
+        </div>
+
+        <Container style={{ position: 'relative', zIndex: 1 }}>
           <Row className="align-items-center">
             <Col lg={12} className="text-center mb-5 mb-lg-0">
               <h1 className="hero-title">
