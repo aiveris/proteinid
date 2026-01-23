@@ -84,7 +84,7 @@ const Landing = () => {
           <Row className="align-items-center">
             <Col lg={12} className="text-center mb-5 mb-lg-0">
               <h1 className="hero-title">
-                <i className="fas fa-dumbbell me-3"></i>ProteinID
+                ProteinID
               </h1>
               <p className="hero-subtitle">
                 Sekite savo kasdienį baltymų suvartojimo kiekį lengvai ir efektyviai. 
