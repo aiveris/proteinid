@@ -594,7 +594,7 @@ const Dashboard = () => {
                           <td style={{ padding: '0.3rem 0.375rem' }}>{time}</td>
                           <td style={{ padding: '0.3rem 0.375rem' }}>{entry.food_name}</td>
                           <td style={{ padding: '0.3rem 0.375rem' }}>{entry.serving_size}</td>
-                          <td className="fw-bold" style={{ padding: '0.3rem 0.375rem' }}>{Math.round(entry.protein_amount)} g</td>
+                          <td className="fw-bold" style={{ padding: '0.3rem 0.375rem' }}>{Math.round(entry.protein_amount)}g</td>
                           <td className="text-center" style={{ padding: '0.3rem 0.375rem' }}>
                             <Button
                               variant="link"

@@ -46,6 +46,7 @@ const History = () => {
   const [newWeightGoal, setNewWeightGoal] = useState('');
   const [weightLoading, setWeightLoading] = useState(false);
   const [latestWeight, setLatestWeight] = useState(null);
+  const [lastEnteredWeight, setLastEnteredWeight] = useState(null);
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [selectedWeightEntry, setSelectedWeightEntry] = useState(null);
   const [editWeight, setEditWeight] = useState('');
@@ -247,6 +248,7 @@ const History = () => {
       
       setWeightChartData(dataArray);
       setLatestWeight(latestWeightValue);
+      setLastEnteredWeight(latestWeightValue);
     } catch (error) {
       console.error('Error loading weight data:', error);
     }
@@ -685,7 +687,7 @@ const History = () => {
                     <InputGroup size="sm">
                       <Form.Control
                         type="number"
-                        placeholder="Svoris (kg)"
+                        placeholder={lastEnteredWeight ? `${lastEnteredWeight}kg` : "Svoris (kg)"}
                         value={newWeight}
                         onChange={(e) => setNewWeight(e.target.value)}
                         step="0.1"
@@ -699,7 +701,7 @@ const History = () => {
                         disabled={weightLoading}
                         style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
                       >
-                        Pridėti
+                        Svoris
                       </Button>
                     </InputGroup>
                   </Col>
@@ -707,7 +709,7 @@ const History = () => {
                     <InputGroup size="sm">
                       <Form.Control
                         type="number"
-                        placeholder="Tikslas (kg)"
+                        placeholder={weightGoal > 0 ? `${weightGoal}kg` : "Tikslas (kg)"}
                         value={newWeightGoal}
                         onChange={(e) => setNewWeightGoal(e.target.value)}
                         step="0.1"
@@ -721,7 +723,7 @@ const History = () => {
                         disabled={weightLoading}
                         style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
                       >
-                        Nustatyti
+                        Tikslas
                       </Button>
                     </InputGroup>
                   </Col>
