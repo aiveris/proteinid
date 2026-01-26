@@ -114,7 +114,7 @@ const Dashboard = () => {
         const data = userSnap.data();
         if (data.weight && data.gender) {
           // Simple calculation: weight * multiplier
-          const multiplier = data.gender === 'male' ? 1.8 : 1.6;
+          const multiplier = data.gender === 'male' ? 1.0 : 0.8;
           const calculatedGoal = Math.round(data.weight * multiplier);
           setGoal(calculatedGoal);
         }
@@ -332,13 +332,7 @@ const Dashboard = () => {
         display: false
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function(context) {
-            return `Baltymai: ${context.parsed.y}g`;
-          }
-        }
+        enabled: false
       }
     },
     scales: {

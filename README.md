@@ -228,6 +228,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && 
         request.resource.data.user_id == request.auth.uid;
     }
+    
+    // Weight logs collection
+    match /weight_logs/{document} {
+      allow read, write: if request.auth != null && 
+        resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.user_id == request.auth.uid;
+    }
   }
 }
 ```

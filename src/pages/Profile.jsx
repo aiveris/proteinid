@@ -70,7 +70,7 @@ const Profile = () => {
 
   const calculateGoal = () => {
     if (weight && gender) {
-      const multiplier = gender === 'male' ? 1.8 : 1.6;
+      const multiplier = gender === 'male' ? 1.0 : 0.8;
       return Math.round(parseFloat(weight) * multiplier);
     }
     return 0;
@@ -196,7 +196,7 @@ const Profile = () => {
                   Jūsų dienos tikslas: <strong>{calculateGoal()}g</strong> baltymų
                   <br />
                   <small className="text-muted">
-                    (Vyrams: {weight} kg × 1.8 | Moterims: {weight} kg × 1.6)
+                    (Vyrams: {weight} kg × 1.0 | Moterims: {weight} kg × 0.8)
                   </small>
                 </Alert>
               )}

@@ -24,9 +24,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Configure Google Provider
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+// Configure Google Provider - allow automatic sign-in persistence
+// No custom parameters needed - Firebase will use localStorage by default
 
 export default app;

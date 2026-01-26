@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Container, Card, Table, Nav, Dropdown, Row, Col, Form, ProgressBar, Modal } from 'react-bootstrap';
+import { Container, Card, Table, Nav, Dropdown, Row, Col, Form, ProgressBar, Modal, Button, InputGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Line } from 'react-chartjs-2';
@@ -40,11 +40,22 @@ const History = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [modalEntries, setModalEntries] = useState([]);
+  const [weightChartData, setWeightChartData] = useState([]);
+  const [weightGoal, setWeightGoal] = useState(0);
+  const [newWeight, setNewWeight] = useState('');
+  const [newWeightGoal, setNewWeightGoal] = useState('');
+  const [weightLoading, setWeightLoading] = useState(false);
+  const [latestWeight, setLatestWeight] = useState(null);
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [selectedWeightEntry, setSelectedWeightEntry] = useState(null);
+  const [editWeight, setEditWeight] = useState('');
 
   useEffect(() => {
     if (currentUser) {
       loadUserGoal();
       loadChartData();
+      loadWeightData();
+      loadWeightGoal();
     }
   }, [currentUser, selectedYear, selectedMonth]);
 
@@ -62,7 +73,7 @@ const History = () => {
       if (userSnap.exists()) {
         const data = userSnap.data();
         if (data.weight && data.gender) {
-          const multiplier = data.gender === 'male' ? 1.8 : 1.6;
+          const multiplier = data.gender === 'male' ? 1.0 : 0.8;
           const calculatedGoal = Math.round(data.weight * multiplier);
           setGoal(calculatedGoal);
         }
@@ -167,6 +178,257 @@ const History = () => {
     }
   };
 
+  const loadWeightData = async () => {
+    try {
+      const firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+      const lastDay = new Date(selectedYear, selectedMonth, 0);
+      
+      const firstDateStr = firstDay.toISOString().split('T')[0];
+      const lastDateStr = lastDay.toISOString().split('T')[0];
+      
+      const weightRef = collection(db, 'weight_logs');
+      const q = query(
+        weightRef,
+        where('user_id', '==', currentUser.uid)
+      );
+      
+      const snapshot = await getDocs(q);
+      const dailyWeights = {};
+      let latestWeightValue = null;
+      let latestTimestamp = null;
+      
+      // Initialize all days of month with null
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        dailyWeights[d] = null;
+      }
+      
+      // Get weight for each day - filter by date in JavaScript
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.date && data.date >= firstDateStr && data.date <= lastDateStr) {
+          const day = parseInt(data.date.split('-')[2]);
+          if (day >= 1 && day <= lastDay.getDate()) {
+            const weight = parseFloat(data.weight) || null;
+            dailyWeights[day] = weight;
+            
+            // Find latest weight by timestamp
+            if (weight !== null && data.timestamp) {
+              const timestamp = new Date(data.timestamp).getTime();
+              if (!latestTimestamp || timestamp > latestTimestamp) {
+                latestTimestamp = timestamp;
+                latestWeightValue = weight;
+              }
+            }
+          }
+        }
+      });
+      
+      // If no weight in current month, find latest from all data
+      if (latestWeightValue === null) {
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.weight && data.timestamp) {
+            const timestamp = new Date(data.timestamp).getTime();
+            if (!latestTimestamp || timestamp > latestTimestamp) {
+              latestTimestamp = timestamp;
+              latestWeightValue = parseFloat(data.weight);
+            }
+          }
+        });
+      }
+      
+      // Convert to array for chart
+      const dataArray = Object.keys(dailyWeights)
+        .sort((a, b) => parseInt(a) - parseInt(b))
+        .map(day => ({
+          day: parseInt(day),
+          weight: dailyWeights[day]
+        }));
+      
+      setWeightChartData(dataArray);
+      setLatestWeight(latestWeightValue);
+    } catch (error) {
+      console.error('Error loading weight data:', error);
+    }
+  };
+
+  const loadWeightGoal = async () => {
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        if (data.weight_goal) {
+          setWeightGoal(data.weight_goal);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading weight goal:', error);
+    }
+  };
+
+  const handleAddWeight = async () => {
+    if (!newWeight || parseFloat(newWeight) <= 0) {
+      alert('Įveskite teisingą svorį');
+      return;
+    }
+    
+    setWeightLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const weightRef = collection(db, 'weight_logs');
+      
+      // Check if weight already exists for today
+      const q = query(
+        weightRef,
+        where('user_id', '==', currentUser.uid),
+        where('date', '==', today)
+      );
+      const existing = await getDocs(q);
+      
+      if (!existing.empty) {
+        // Update existing weight
+        await updateDoc(existing.docs[0].ref, {
+          weight: parseFloat(newWeight),
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // Add new weight
+        await addDoc(weightRef, {
+          user_id: currentUser.uid,
+          weight: parseFloat(newWeight),
+          date: today,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      setNewWeight('');
+      await loadWeightData();
+    } catch (error) {
+      console.error('Error adding weight:', error);
+      alert('Klaida pridedant svorį');
+    } finally {
+      setWeightLoading(false);
+    }
+  };
+
+  const handleSetWeightGoal = async () => {
+    if (!newWeightGoal || parseFloat(newWeightGoal) <= 0) {
+      alert('Įveskite teisingą svorio tikslą');
+      return;
+    }
+    
+    setWeightLoading(true);
+    try {
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        weight_goal: parseFloat(newWeightGoal)
+      });
+      
+      setWeightGoal(parseFloat(newWeightGoal));
+      setNewWeightGoal('');
+    } catch (error) {
+      console.error('Error setting weight goal:', error);
+      alert('Klaida nustatant svorio tikslą');
+    } finally {
+      setWeightLoading(false);
+    }
+  };
+
+  const handleWeightChartClick = async (event, elements) => {
+    if (elements.length === 0) return;
+    
+    const element = elements[0];
+    const datasetIndex = element.datasetIndex;
+    
+    // Only handle clicks on the weight dataset (index 0), not the goal line (index 1)
+    if (datasetIndex !== 0) return;
+    
+    const dataIndex = element.index;
+    const clickedDay = weightChartData[dataIndex];
+    
+    if (!clickedDay || clickedDay.weight === null || clickedDay.weight === undefined) {
+      return;
+    }
+    
+    // Find the date for this day
+    const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(clickedDay.day).padStart(2, '0')}`;
+    
+    // Find the weight log entry
+    try {
+      const weightRef = collection(db, 'weight_logs');
+      const q = query(
+        weightRef,
+        where('user_id', '==', currentUser.uid),
+        where('date', '==', dateStr)
+      );
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        const entry = {
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data()
+        };
+        setSelectedWeightEntry(entry);
+        setEditWeight(entry.weight.toString());
+        setShowWeightModal(true);
+      }
+    } catch (error) {
+      console.error('Error loading weight entry:', error);
+    }
+  };
+
+  const handleEditWeight = async () => {
+    if (!editWeight || parseFloat(editWeight) <= 0) {
+      alert('Įveskite teisingą svorį');
+      return;
+    }
+    
+    if (!selectedWeightEntry) return;
+    
+    setWeightLoading(true);
+    try {
+      const weightRef = doc(db, 'weight_logs', selectedWeightEntry.id);
+      await updateDoc(weightRef, {
+        weight: parseFloat(editWeight),
+        timestamp: new Date().toISOString()
+      });
+      
+      setShowWeightModal(false);
+      setSelectedWeightEntry(null);
+      setEditWeight('');
+      await loadWeightData();
+    } catch (error) {
+      console.error('Error editing weight:', error);
+      alert('Klaida redaguojant svorį');
+    } finally {
+      setWeightLoading(false);
+    }
+  };
+
+  const handleDeleteWeight = async () => {
+    if (!selectedWeightEntry) return;
+    
+    if (!window.confirm('Ar tikrai norite ištrinti šį svorio įrašą?')) return;
+    
+    setWeightLoading(true);
+    try {
+      const weightRef = doc(db, 'weight_logs', selectedWeightEntry.id);
+      await deleteDoc(weightRef);
+      
+      setShowWeightModal(false);
+      setSelectedWeightEntry(null);
+      setEditWeight('');
+      await loadWeightData();
+    } catch (error) {
+      console.error('Error deleting weight:', error);
+      alert('Klaida trinant svorio įrašą');
+    } finally {
+      setWeightLoading(false);
+    }
+  };
+
   const loadDayEntries = async (day) => {
     try {
       const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -195,6 +457,31 @@ const History = () => {
       setShowModal(true);
     } catch (error) {
       console.error('Error loading day entries:', error);
+    }
+  };
+
+  const handleDeleteDayEntries = async () => {
+    if (!selectedDate || modalEntries.length === 0) return;
+    
+    if (!window.confirm(`Ar tikrai norite ištrinti visus ${modalEntries.length} ${modalEntries.length === 1 ? 'įrašą' : 'įrašus'} šiai dienai?`)) return;
+    
+    try {
+      // Delete all entries for this day
+      const deletePromises = modalEntries.map(entry => 
+        deleteDoc(doc(db, 'daily_logs', entry.id))
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Close modal and reload data
+      setShowModal(false);
+      setModalEntries([]);
+      setSelectedDate(null);
+      await loadChartData();
+      await loadAllTimeStats();
+    } catch (error) {
+      console.error('Error deleting day entries:', error);
+      alert('Klaida trinant dienos įrašus');
     }
   };
 
@@ -354,13 +641,7 @@ const History = () => {
                     display: false
                   },
                   tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                      label: function(context) {
-                        return `Baltymai: ${context.parsed.y}g`;
-                      }
-                    }
+                    enabled: false
                   }
                 },
                 scales: {
@@ -390,6 +671,178 @@ const History = () => {
             </div>
           </Card.Body>
         </Card>
+
+        {/* Weight Tracking Chart */}
+        <Card className="mt-3">
+          <Card.Body>
+            <Row className="mb-3 align-items-center">
+              <Col xs={12} md={3}>
+                <h6 className="fw-bold mb-2 mb-md-0">Svorio sekimas</h6>
+              </Col>
+              <Col xs={12} md={9}>
+                <Row className="g-2">
+                  <Col xs={6} sm={6} md={5}>
+                    <InputGroup size="sm">
+                      <Form.Control
+                        type="number"
+                        placeholder="Svoris (kg)"
+                        value={newWeight}
+                        onChange={(e) => setNewWeight(e.target.value)}
+                        step="0.1"
+                        min="30"
+                        max="300"
+                        style={{ fontSize: '0.875rem' }}
+                      />
+                      <Button 
+                        variant="primary" 
+                        onClick={handleAddWeight}
+                        disabled={weightLoading}
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
+                      >
+                        Pridėti
+                      </Button>
+                    </InputGroup>
+                  </Col>
+                  <Col xs={6} sm={6} md={5}>
+                    <InputGroup size="sm">
+                      <Form.Control
+                        type="number"
+                        placeholder="Tikslas (kg)"
+                        value={newWeightGoal}
+                        onChange={(e) => setNewWeightGoal(e.target.value)}
+                        step="0.1"
+                        min="30"
+                        max="300"
+                        style={{ fontSize: '0.875rem' }}
+                      />
+                      <Button 
+                        variant="primary" 
+                        onClick={handleSetWeightGoal}
+                        disabled={weightLoading}
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
+                      >
+                        Nustatyti
+                      </Button>
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+            <div style={{ height: '200px' }}>
+              <Line data={{
+                labels: weightChartData.map(d => d.day),
+                datasets: [
+                  {
+                    label: 'Svoris (kg)',
+                    data: weightChartData.map(d => d.weight === null ? undefined : d.weight),
+                    borderColor: 'rgb(25, 135, 84)',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    spanGaps: true,
+                  },
+                  {
+                    label: 'Tikslas',
+                    data: weightChartData.map(() => weightGoal > 0 ? weightGoal : undefined),
+                    borderColor: 'rgba(220, 53, 69, 0.8)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                  }
+                ]
+              }} options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    enabled: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: false,
+                    min: latestWeight ? Math.round(latestWeight) - 3 : undefined,
+                    max: latestWeight ? Math.round(latestWeight) + 3 : undefined,
+                    ticks: {
+                      stepSize: 1,
+                      callback: function(value) {
+                        return Math.round(value) + 'kg';
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                  },
+                  x: {
+                    grid: {
+                      display: false
+                    }
+                  }
+                },
+                interaction: {
+                  mode: 'nearest',
+                  axis: 'x',
+                  intersect: false,
+                  filter: function(interactionItem) {
+                    // Only allow interaction with weight dataset (index 0), not goal line (index 1)
+                    return interactionItem.datasetIndex === 0;
+                  }
+                },
+                onClick: handleWeightChartClick
+              }} />
+            </div>
+          </Card.Body>
+        </Card>
+
+        {/* Weight Edit/Delete Modal */}
+        <Modal show={showWeightModal} onHide={() => setShowWeightModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {selectedWeightEntry && new Date(selectedWeightEntry.date + 'T12:00:00').toLocaleDateString('lt-LT', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold">Svoris (kg)</Form.Label>
+              <Form.Control
+                type="number"
+                value={editWeight}
+                onChange={(e) => setEditWeight(e.target.value)}
+                step="0.1"
+                min="30"
+                max="300"
+                placeholder="Įveskite svorį"
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button 
+              variant="danger" 
+              onClick={handleDeleteWeight}
+              disabled={weightLoading}
+            >
+              <i className="bi bi-trash me-2"></i>Ištrinti
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleEditWeight}
+              disabled={weightLoading || !editWeight}
+            >
+              {weightLoading ? 'Išsaugoma...' : 'Išsaugoti'}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
         {/* Detailed List */}
         <Card className="mt-3">
@@ -462,6 +915,14 @@ const History = () => {
                 day: 'numeric' 
               })}
             </Modal.Title>
+            {modalEntries.length > 0 && (
+              <i 
+                className="bi bi-trash text-danger ms-auto me-2" 
+                onClick={handleDeleteDayEntries}
+                style={{ cursor: 'pointer', fontSize: '1.2rem' }}
+                title="Ištrinti visus įrašus"
+              ></i>
+            )}
           </Modal.Header>
           <Modal.Body>
             {modalEntries.length === 0 ? (
