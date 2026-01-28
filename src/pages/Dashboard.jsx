@@ -578,8 +578,8 @@ const Dashboard = () => {
                       <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '15%' }}>Laikas</th>
                       <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '41%' }}>Produktas</th>
                       <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '16%' }}>Porcija</th>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '19%' }}>Baltymai</th>
-                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '9%' }}></th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '20%' }}>Baltymai</th>
+                      <th style={{ fontSize: '0.75rem', padding: '0.5rem 0.375rem', width: '8%' }}></th>
                     </tr>
                   </thead>
                   <tbody>
